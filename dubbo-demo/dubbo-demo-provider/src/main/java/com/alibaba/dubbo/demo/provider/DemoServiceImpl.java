@@ -25,8 +25,15 @@ import java.util.Date;
 public class DemoServiceImpl implements DemoService {
 
     @Override
-    public String sayHello(String name) {
+    public String sayHello(String name)  {
         System.out.println("[" + new SimpleDateFormat("HH:mm:ss").format(new Date()) + "] Hello " + name + ", request from consumer: " + RpcContext.getContext().getRemoteAddress());
+        System.out.println("复杂逻辑，6秒钟开始");
+        try {
+            Thread.sleep(6000L);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println("写入数据库相关操作执行完毕了");
         return "Hello " + name + ", response from provider: " + RpcContext.getContext().getLocalAddress();
     }
 

@@ -91,6 +91,7 @@ public class NettyServerHandler extends ChannelDuplexHandler {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        System.out.println("============>>>>>>>======NettyServerHandler========channelRead======》》》》》msg="+msg);
         NettyChannel channel = NettyChannel.getOrAddChannel(ctx.channel(), url, handler);
         try {
             handler.received(channel, msg);

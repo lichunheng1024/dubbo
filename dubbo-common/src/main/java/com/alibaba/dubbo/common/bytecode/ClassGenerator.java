@@ -292,6 +292,8 @@ public final class ClassGenerator {
                     }
                 }
             }
+            //将class文件生成到本地，查看一下咯。
+            mCtc.debugWriteFile("/Users/lch/Documents");
             return mCtc.toClass(loader, pd);
         } catch (RuntimeException e) {
             throw e;

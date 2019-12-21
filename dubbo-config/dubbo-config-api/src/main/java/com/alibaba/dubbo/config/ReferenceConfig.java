@@ -160,7 +160,9 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         if (destroyed) {
             throw new IllegalStateException("Already destroyed!");
         }
+        // 检测 ref 是否为空，为空则通过 init 方法创建
         if (ref == null) {
+            // init 方法主要用于处理配置，以及调用 createProxy 生成代理类
             init();
         }
         return ref;
@@ -184,10 +186,12 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
     }
 
     private void init() {
+        // 避免重复初始化，使用volatile关键字修饰，保证可见性
         if (initialized) {
             return;
         }
         initialized = true;
+        // 检测接口名合法性
         if (interfaceName == null || interfaceName.length() == 0) {
             throw new IllegalStateException("<dubbo:reference interface=\"\" /> interface not allow null!");
         }
@@ -306,6 +310,9 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         appendParameters(map, module);
         appendParameters(map, consumer, Constants.DEFAULT_KEY);
         appendParameters(map, this);
+
+        //-----------------------------
+
         String prefix = StringUtils.getServiceKey(map);
         if (methods != null && !methods.isEmpty()) {
             for (MethodConfig method : methods) {
@@ -393,6 +400,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
             }
 
             if (urls.size() == 1) {
+                //----核心-------创建 Invoker
                 invoker = refprotocol.refer(interfaceClass, urls.get(0));
             } else {
                 List<Invoker<?>> invokers = new ArrayList<Invoker<?>>();

@@ -16,7 +16,9 @@
  */
 package com.alibaba.dubbo.common.utils;
 
+import com.alibaba.dubbo.common.Constants;
 import com.alibaba.dubbo.common.URL;
+import com.alibaba.dubbo.common.extension.ExtensionLoader;
 import com.alibaba.dubbo.common.logger.Logger;
 import com.alibaba.dubbo.common.logger.LoggerFactory;
 
@@ -59,6 +61,16 @@ public class NetUtils {
         return RND_PORT_START + RANDOM.nextInt(RND_PORT_RANGE);
     }
 
+    /**
+     * 获取可用端口号
+     *  思路：
+     *      创建一个ServerSocket并绑定一个null,采用系统分配的方式。
+     *      成功：则把系统分配的端口获取并返回
+     *      失败：采用30000+random(10000) 方式返回上一级
+     * @return
+     * @param portToBind
+     * @param s
+     */
     public static int getAvailablePort() {
         ServerSocket ss = null;
         try {
@@ -78,9 +90,6 @@ public class NetUtils {
     }
 
     public static int getAvailablePort(int port) {
-        if (port <= 0) {
-            return getAvailablePort();
-        }
         for (int i = port; i < MAX_PORT; i++) {
             ServerSocket ss = null;
             try {
@@ -97,8 +106,34 @@ public class NetUtils {
                 }
             }
         }
-        return port;
+        return getAvailablePort();
     }
+
+
+    public static int getAvailablePort1(String host,int port) {
+        //如果设置的port <=0 就通过 new ServerSocket().bind(null).getLocalPort()的方式获取，若失败则采用 30000 + random(10000)
+        for (int i = port; i < MAX_PORT; i++) {
+            ServerSocket ss = null;
+            try {
+                ss = new ServerSocket();
+                ss.bind(new InetSocketAddress(host,i));
+                return i;
+            } catch (IOException e) {
+                // continue
+            } finally {
+                if (ss != null) {
+                    try {
+                        ss.close();
+                    } catch (IOException e) {
+                    }
+                }
+            }
+        }
+        return getAvailablePort();
+    }
+
+
+
 
     public static boolean isInvalidPort(int port) {
         return port <= MIN_PORT || port > MAX_PORT;

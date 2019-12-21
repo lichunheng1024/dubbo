@@ -34,6 +34,8 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.concurrent.DefaultThreadFactory;
 
 import java.util.concurrent.TimeUnit;
@@ -77,7 +79,7 @@ public class NettyClient extends AbstractClient {
             @Override
             protected void initChannel(Channel ch) throws Exception {
                 NettyCodecAdapter adapter = new NettyCodecAdapter(getCodec(), getUrl(), NettyClient.this);
-                ch.pipeline()//.addLast("logging",new LoggingHandler(LogLevel.INFO))//for debug
+                ch.pipeline().addLast("logging",new LoggingHandler(LogLevel.INFO))//for debug
                         .addLast("decoder", adapter.getDecoder())
                         .addLast("encoder", adapter.getEncoder())
                         .addLast("handler", nettyClientHandler);

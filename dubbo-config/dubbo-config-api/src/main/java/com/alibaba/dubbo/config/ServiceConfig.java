@@ -353,10 +353,15 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         unexported = true;
     }
 
+    /**
+     * 暴露 Dubbo URL
+     */
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void doExportUrls() {
+        //加载注册中心 URL列表
         List<URL> registryURLs = loadRegistries(true);
         for (ProtocolConfig protocolConfig : protocols) {
+            //循环 protocols ，向逐个注册中心暴露服务
             doExportUrlsFor1Protocol(protocolConfig, registryURLs);
         }
     }
@@ -471,6 +476,8 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
 
         String host = this.findConfigedHosts(protocolConfig, registryURLs, map);
         Integer port = this.findConfigedPorts(protocolConfig, name, map);
+
+
         URL url = new URL(name, host, port, (contextPath == null || contextPath.length() == 0 ? "" : contextPath + "/") + path, map);
 
         if (ExtensionLoader.getExtensionLoader(ConfiguratorFactory.class)
@@ -485,6 +492,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
 
             // export to local if the config is not remote (export to remote only when config is remote)
             if (!Constants.SCOPE_REMOTE.toString().equalsIgnoreCase(scope)) {
+                //本地暴露服务
                 exportLocal(url);
             }
             // export to remote if the config is not local (export to local only when config is local)
@@ -508,17 +516,22 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                         if (StringUtils.isNotEmpty(proxy)) {
                             registryURL = registryURL.addParameter(Constants.PROXY_KEY, proxy);
                         }
-
+                        /**
+                         * 通过动态代理转换Invoker,registryURL存储的是注册中心地址，使用export做为key追加服务元数据信息
+                         */
                         Invoker<?> invoker = proxyFactory.getInvoker(ref, (Class) interfaceClass, registryURL.addParameterAndEncoded(Constants.EXPORT_KEY, url.toFullString()));
                         DelegateProviderMetaDataInvoker wrapperInvoker = new DelegateProviderMetaDataInvoker(invoker, this);
 
+                        /**
+                         * 服务暴露后，向注册中心注册服务信息
+                         */
                         Exporter<?> exporter = protocol.export(wrapperInvoker);
                         exporters.add(exporter);
                     }
                 } else {
                     Invoker<?> invoker = proxyFactory.getInvoker(ref, (Class) interfaceClass, url);
                     DelegateProviderMetaDataInvoker wrapperInvoker = new DelegateProviderMetaDataInvoker(invoker, this);
-
+                    //处理没有注册中心场景，直接暴露服务
                     Exporter<?> exporter = protocol.export(wrapperInvoker);
                     exporters.add(exporter);
                 }
@@ -530,10 +543,15 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void exportLocal(URL url) {
         if (!Constants.LOCAL_PROTOCOL.equalsIgnoreCase(url.getProtocol())) {
+            //创建本地 dubbo url
             URL local = URL.valueOf(url.toFullString())
+                    //injvm
                     .setProtocol(Constants.LOCAL_PROTOCOL)
+                    //本地 127.0.0.1
                     .setHost(LOCALHOST)
+                    //端口号为 0
                     .setPort(0);
+            //实现类  如 DemoServiceImpl
             StaticContext.getContext(Constants.SERVICE_IMPL_CLASS).put(url.getServiceKey(), getServiceClass(ref));
             Exporter<?> exporter = protocol.export(
                     proxyFactory.getInvoker(ref, (Class) interfaceClass, local));
@@ -636,7 +654,6 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
      */
     private Integer findConfigedPorts(ProtocolConfig protocolConfig, String name, Map<String, String> map) {
         Integer portToBind = null;
-
         // parse bind port from environment
         String port = getValueFromConfig(protocolConfig, Constants.DUBBO_PORT_TO_BIND);
         portToBind = parsePort(port);
@@ -647,31 +664,25 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             if (provider != null && (portToBind == null || portToBind == 0)) {
                 portToBind = provider.getPort();
             }
-            final int defaultPort = ExtensionLoader.getExtensionLoader(Protocol.class).getExtension(name).getDefaultPort();
-            if (portToBind == null || portToBind == 0) {
-                portToBind = defaultPort;
-            }
-            if (portToBind == null || portToBind <= 0) {
-                portToBind = getRandomPort(name);
-                if (portToBind == null || portToBind < 0) {
-                    portToBind = getAvailablePort(defaultPort);
-                    putRandomPort(name, portToBind);
-                }
-                logger.warn("Use random available port(" + portToBind + ") for protocol " + name);
-            }
         }
-
+        if(portToBind <= 0){
+            portToBind = ExtensionLoader.getExtensionLoader(Protocol.class).getExtension(name).getDefaultPort();
+        }
+        portToBind=getAvailablePort(portToBind);
         // save bind port, used as url's key later
         map.put(Constants.BIND_PORT_KEY, String.valueOf(portToBind));
-
+        System.out.println("======配置map="+map);
         // registry port, not used as bind port by default
         String portToRegistryStr = getValueFromConfig(protocolConfig, Constants.DUBBO_PORT_TO_REGISTRY);
         Integer portToRegistry = parsePort(portToRegistryStr);
         if (portToRegistry == null) {
             portToRegistry = portToBind;
         }
-
         return portToRegistry;
+    }
+
+    private boolean isInvalidPortToBind(Integer portToBind) {
+    return false;
     }
 
     private Integer parsePort(String configPort) {

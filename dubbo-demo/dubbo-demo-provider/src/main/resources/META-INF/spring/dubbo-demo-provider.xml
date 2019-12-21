@@ -24,17 +24,24 @@
     <!-- provider's application name, used for tracing dependency relationship -->
     <dubbo:application name="demo-provider"/>
 
+
     <!-- use multicast registry center to export service -->
-<!--    <dubbo:registry address="multicast://224.5.6.7:1234"/>-->
+    <!--<dubbo:registry address="multicast://224.5.6.7:1234"/>-->
     <dubbo:registry address="zookeeper://127.0.0.1:2181"/>
 
     <!-- use dubbo protocol to export service on port 20880 -->
-    <dubbo:protocol name="dubbo" port="20880"/>
+    <dubbo:protocol name="dubbo" port="2181" transporter="netty4"/>
+<!--
+    <dubbo:protocol name="injvm" port="2181" transporter="netty4"/>
+-->
 
     <!-- service implementation, as same as regular local bean -->
     <bean id="demoService" class="com.alibaba.dubbo.demo.provider.DemoServiceImpl"/>
-
+    <!-- service implementation, as same as regular local bean -->
+    <bean id="demoService111111" class="com.alibaba.dubbo.demo.provider.DemoServiceImpl"/>
     <!-- declare the service interface to be exported -->
-    <dubbo:service interface="com.alibaba.dubbo.demo.DemoService" ref="demoService"/>
+    <dubbo:service interface="com.alibaba.dubbo.demo.DemoService" ref="demoService" protocol="dubbo" cluster="forking"/>
+    <!--<dubbo:service interface="com.alibaba.dubbo.demo.DemoService" ref="demoService111111" protocol="injvm"/>-->
+
 
 </beans>

@@ -65,6 +65,9 @@ public class RpcMessageHandler implements Replier<RpcMessage> {
             throw new RemotingException(channel, "Service method not found.");
         } catch (InvocationTargetException e) {
             return new MockResult(e.getTargetException());
+        } catch (java.lang.NoSuchMethodException e) {
+            e.printStackTrace();
+            throw new RemotingException(channel, "Service method not found.");
         }
 
     }
